@@ -16,33 +16,42 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from chamados import views
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from django.contrib import admin
-from django.urls import path, include
+# Views da aplicação
 from chamados import views
+
+# JWT views da biblioteca simplejwt
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 
+# Para servir arquivos de mídia no modo dev
+from django.conf import settings
+from django.conf.urls.static import static
+
 urlpatterns = [
+    # Painel de administração Django
     path('admin/', admin.site.urls),
 
-    # URLs web
-    path('', include('chamados.urls')),  
+    # Rotas web (interface HTML do projeto)
+    path('', include('chamados.urls')),
 
-    # URLs da API
-    path('api/', include('chamados.urls_api')),  
+    # Rotas da API REST (endpoints JSON)
+    path('api/', include('chamados.urls_api')),
 
-    # Rotas para login/logout via views web
+    # Login e logout da interface web
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
 
-    # JWT endpoints para autenticação API
+    # Endpoints para autenticação JWT (API)
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
+
+# Rota para servir arquivos de mídia no ambiente de desenvolvimento
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
     

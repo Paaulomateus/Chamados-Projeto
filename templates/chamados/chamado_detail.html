@@ -1,0 +1,38 @@
+{% extends 'chamados/base.html' %}
+
+{% block title %}Detalhe do Chamado{% endblock %}
+
+{% block content %}
+<h2>{{ chamado.titulo }}</h2>
+<p><strong>Status:</strong> {{ chamado.get_status_display }}</p>
+<p><strong>Prioridade:</strong> {{ chamado.get_prioridade_display }}</p>
+<p><strong>Descrição:</strong> {{ chamado.descricao }}</p>
+
+{% if chamado.arquivo %}
+  <p><a href="{{ chamado.arquivo.url }}" target="_blank">📎 Ver anexo</a></p>
+{% endif %}
+
+<hr>
+
+<h3>Comentários</h3>
+{% for comentario in comentarios %}
+    <div class="border rounded p-2 mb-3 shadow-sm bg-light">
+        <p class="mb-1"><strong>{{ comentario.usuario.username }}</strong> <small class="text-muted">em {{ comentario.criado_em|date:"d/m/Y H:i" }}</small></p>
+        <p>{{ comentario.texto }}</p>
+    </div>>
+{% empty %}
+  <p>Não há comentários ainda.</p>
+{% endfor %}
+
+<hr>
+
+<h4>Adicionar Comentário</h4>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary">💬 Enviar comentário</button>
+
+</form>
+
+<a href="{% url 'chamado_list' %}">Voltar para lista</a>
+{% endblock %}

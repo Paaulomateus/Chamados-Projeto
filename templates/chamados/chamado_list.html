@@ -6,6 +6,26 @@ Lista de Chamados
 
 {% block content %}
 
+<form method="get" class="mb-4"> {# 🔧 movido para dentro do bloco content #}
+  <input type="text" name="busca" placeholder="Buscar por título ou descrição" value="{{ valores.busca }}">
+
+  <select name="status">
+    <option value="">Todos os status</option>
+    <option value="aberto" {% if valores.status == "aberto" %}selected{% endif %}>Aberto</option>
+    <option value="em_andamento" {% if valores.status == "em_andamento" %}selected{% endif %}>Em Andamento</option>
+    <option value="concluido" {% if valores.status == "concluido" %}selected{% endif %}>Concluído</option>
+  </select>
+
+  <select name="prioridade">
+    <option value="">Todas as prioridades</option>
+    <option value="baixa" {% if valores.prioridade == "baixa" %}selected{% endif %}>Baixa</option>
+    <option value="media" {% if valores.prioridade == "media" %}selected{% endif %}>Média</option>
+    <option value="alta" {% if valores.prioridade == "alta" %}selected{% endif %}>Alta</option>
+  </select>
+
+  <button type="submit">Filtrar</button>
+</form>
+
 <h1 class="mb-4">Chamados</h1>
 
 <a href="{% url 'chamado_create' %}" class="btn btn-success mb-3">
@@ -23,9 +43,18 @@ Lista de Chamados
     </tr>
   </thead>
   <tbody>
-    {% for chamado in chamados %}
+    {% for chamado in page_obj %}
     <tr>
-      <td>{{ chamado.titulo }}</td>
+      <td>
+        {{ chamado.titulo }}
+        <br>
+        {# 📎 Adicionado link de anexo, se existir #}
+        {% if chamado.arquivo %}
+          <a href="{{ chamado.arquivo.url }}" target="_blank">📎 Ver anexo</a>
+        {% else %}
+          <span class="text-muted">Sem anexo</span>
+        {% endif %}
+      </td>
       <td>{{ chamado.get_status_display }}</td>
       <td>{{ chamado.get_prioridade_display }}</td>
       <td>{{ chamado.criado_em|date:"d/m/Y H:i" }}</td>
@@ -41,5 +70,22 @@ Lista de Chamados
     {% endfor %}
   </tbody>
 </table>
+
+{# 🔧 Corrigido: bloco de paginação estava dentro do <tbody>, agora está fora! #}
+<div class="pagination mt-3">
+  <span>
+    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+  </span>
+
+  <div class="mt-2">
+    {% if page_obj.has_previous %}
+      <a href="?{% if valores.busca %}busca={{ valores.busca }}&{% endif %}{% if valores.status %}status={{ valores.status }}&{% endif %}{% if valores.prioridade %}prioridade={{ valores.prioridade }}&{% endif %}page={{ page_obj.previous_page_number }}" class="btn btn-outline-primary btn-sm">⬅ Anterior</a>
+    {% endif %}
+
+    {% if page_obj.has_next %}
+      <a href="?{% if valores.busca %}busca={{ valores.busca }}&{% endif %}{% if valores.status %}status={{ valores.status }}&{% endif %}{% if valores.prioridade %}prioridade={{ valores.prioridade }}&{% endif %}page={{ page_obj.next_page_number }}" class="btn btn-outline-primary btn-sm">Próxima ➡</a>
+    {% endif %}
+  </div>
+</div>
 
 {% endblock %}

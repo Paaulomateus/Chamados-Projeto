@@ -6,5 +6,6 @@ urlpatterns = [
     path('novo/', views.chamado_create, name='chamado_create'),
     path('editar/<int:pk>/', views.chamado_edit, name='chamado_edit'),
     path('excluir/<int:pk>/', views.chamado_delete, name='chamado_delete'),
+    path('detalhe/<int:pk>/', views.chamado_detail, name='chamado_detail'),
 ]
 
