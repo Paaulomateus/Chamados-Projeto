@@ -1,13 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import ChamadoForm, ComentarioForm
 from .models import Chamado
-from rest_framework import viewsets
+from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
 from .serializers import ChamadoSerializer
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
+from .serializers_user import RegisterSerializer
+from django.contrib.auth.models import User
 
 @login_required
 def chamado_list(request):
@@ -17,6 +20,9 @@ def chamado_list(request):
     pagina = request.GET.get('page', 1)
 
     chamados = Chamado.objects.all()
+
+    if not request.user.is_staff and not request.user.is_superuser:
+        chamados = chamados.filter(usuario=request.user)
 
     if busca:
         chamados = chamados.filter(titulo__icontains=busca) | chamados.filter(descricao__icontains=busca)
@@ -49,6 +55,8 @@ def chamado_create(request):
     if request.method == 'POST':
         form = ChamadoForm(request.POST, request.FILES)
         if form.is_valid():
+            chamado = form.save(commit=False)
+            chamado.usuario = request.user  
             form.save()
             return redirect('chamado_list')
     else:
@@ -59,6 +67,11 @@ def chamado_create(request):
 @login_required
 def chamado_edit(request, pk):
     chamado = get_object_or_404(Chamado, pk=pk)
+
+    if chamado.usuario != request.user and not request.user.is_staff:
+        messages.error(request, "Você não tem permissão para editar este chamado.")
+        return redirect('chamado_list')
+
     if request.method == 'POST':
         form = ChamadoForm(request.POST, request.FILES, instance=chamado)
         if form.is_valid():
@@ -66,22 +79,36 @@ def chamado_edit(request, pk):
             return redirect('chamado_list')
     else:
         form = ChamadoForm(instance=chamado)
-    
+
     return render(request, 'chamados/chamado_form.html', {'form': form})
 
 @login_required
 def chamado_delete(request, pk):
     chamado = get_object_or_404(Chamado, pk=pk)
+
+    if chamado.usuario != request.user and not request.user.is_staff:
+        messages.error(request, "Você não tem permissão para excluir este chamado.")
+        return redirect('chamado_list')
+
     if request.method == 'POST':
         chamado.delete()
         return redirect('chamado_list')
-    
+
     return render(request, 'chamados/chamado_confirm_delete.html', {'chamado': chamado})
 
 class ChamadoViewSet(viewsets.ModelViewSet):
     queryset = Chamado.objects.all()
     serializer_class = ChamadoSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return Chamado.objects.all()
+        return Chamado.objects.filter(usuario=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)
+
     
 def login_view(request):
     if request.user.is_authenticated:
@@ -104,12 +131,17 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def chamado_detail(request, pk):
     chamado = get_object_or_404(Chamado, pk=pk)
+
+    if chamado.usuario != request.user and not request.user.is_staff:
+        messages.error(request, "Você não tem permissão para visualizar este chamado.")
+        return redirect('chamado_list')
+
     comentarios = chamado.comentarios.order_by('criado_em')
+
     if request.method == 'POST':
         form = ComentarioForm(request.POST)
         if form.is_valid():
@@ -120,4 +152,14 @@ def chamado_detail(request, pk):
             return redirect('chamado_detail', pk=pk)
     else:
         form = ComentarioForm()
-    return render(request, 'chamados/chamado_detail.html', {'chamado': chamado, 'comentarios': comentarios, 'form': form})
+
+    return render(request, 'chamados/chamado_detail.html', {
+        'chamado': chamado,
+        'comentarios': comentarios,
+        'form': form
+    })
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = []

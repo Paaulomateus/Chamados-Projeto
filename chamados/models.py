@@ -30,6 +30,7 @@ class Chamado(models.Model):
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
     arquivo = models.FileField(upload_to='anexos/', null=True, blank=True)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chamados')
 
     def __str__(self):
         return self.titulo

@@ -33,6 +33,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     # Painel de administração Django
     path('admin/', admin.site.urls),
+    path('api/', include('chamados.urls')),
 
     # Rotas web (interface HTML do projeto)
     path('', include('chamados.urls')),
@@ -45,6 +46,9 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
 
     # Endpoints para autenticação JWT (API)
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

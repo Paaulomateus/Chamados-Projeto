@@ -59,6 +59,7 @@ Lista de Chamados
       <td>{{ chamado.get_prioridade_display }}</td>
       <td>{{ chamado.criado_em|date:"d/m/Y H:i" }}</td>
       <td>
+        <a href="{% url 'chamado_detail' chamado.pk %}" class="btn btn-sm btn-info">💬 Comentários</a>
         <a href="{% url 'chamado_edit' chamado.pk %}" class="btn btn-sm btn-primary">Editar</a>
         <a href="{% url 'chamado_delete' chamado.pk %}" class="btn btn-sm btn-danger">Excluir</a>
       </td>
